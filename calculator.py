@@ -24,3 +24,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #ai1的功能为加减法
