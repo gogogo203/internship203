@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pymysql
+pymongo
+python-pptx
+PyPDF2
