@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>上传PPT文件</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; text-align: center; }
+        input[type=file] { margin: 20px 0; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <h1>上传PPT文件生成选择题</h1>
+    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+        <input type="file" name="pptfile" accept=".ppt,.pptx" required>
+        <br>
+        <button type="submit">上传并生成题目</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f4f4f4;
+    }
+    .question-block {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .question-block p {
+      font-weight: bold;
+    }
+    label {
+      display: block;
+      margin: 5px 0;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>选择题测试</h2>
+  <form method="POST" action="{{ url_for('submit') }}">
+    <input type="hidden" name="total" value="{{ questions|length }}">
+
+    {% for q in questions %}
+    <div class="question-block">
+      <p>{{ loop.index }}. {{ q.question }}</p>
+
+      {% for option_index in range(4) %}
+        <label>
+          <input type="radio" name="q{{ loop.index0 }}" value="{{ ['A','B','C','D'][option_index] }}" required>
+          {{ ['A','B','C','D'][option_index] }}. {{ q.options[option_index] }}
+        </label>
+      {% endfor %}
+
+      <input type="hidden" name="answer{{ loop.index0 }}" value="{{ q.answer }}">
+    </div>
+    {% endfor %}
+
+    <button type="submit">提交答案</button>
+  </form>
+
+</body>
+</html>
