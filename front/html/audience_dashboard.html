@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>听众仪表板 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">欢迎，{{ username }}！（听众）</div>
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">退出登录</a>
+        </div>
+        
+        <h1>听众仪表板</h1>
+        
+        <div class="dashboard-cards">
+            <div class="card">
+                <h3>参与测试</h3>
+                <p>查看所有可用的测试并参与答题</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('quiz.available_quizzes') }}" class="btn btn-primary">查看可用测试</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>我的成绩</h3>
+                <p>查看历史答题记录和成绩统计</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('quiz.my_quiz_history') }}" class="btn btn-primary">查看历史记录</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>快速参与</h3>
+                <p>通过测试ID快速参与答题</p>
+                <div class="quick-actions">
+                    <form action="{{ url_for('quiz.quick_join_quiz') }}" method="post" style="margin-top: 10px;">
+                        <input type="number" name="quiz_id" placeholder="输入测试ID" required style="padding: 8px; margin-right: 10px;">
+                        <button type="submit" class="btn btn-success">快速参与</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>演讲反馈</h3>
+                <p>为您参与过的演讲提供反馈和评价</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('feedback.select_presentation') }}" class="btn btn-primary">提交反馈</a>
+                    <a href="{{ url_for('feedback.my_feedbacks') }}" class="btn btn-secondary">我的反馈</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

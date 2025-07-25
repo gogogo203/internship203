@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>答题结果</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>答题结果</h1>
+    
+    <div class="score-summary">
+        <h2>总体成绩</h2>
+        <p>您的得分: <strong>{{ score }}%</strong></p>
+        <p>正确题数: <strong>{{ correct_answers }}</strong> / {{ total_questions }}</p>
+    </div>
+    
+    {% if results %}
+    <div class="detailed-results">
+        <h2>详细结果</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>题号</th>
+                    <th>题目</th>
+                    <th>您的答案</th>
+                    <th>正确答案</th>
+                    <th>结果</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr class="{{ 'correct' if r.is_correct else 'wrong' }}">
+                    <td>{{ r.index }}</td>
+                    <td>{{ r.question }}</td>
+                    <td>{{ r.user or '未作答' }}</td>
+                    <td>{{ r.correct }}</td>
+                    <td>{{ '✓ 正确' if r.is_correct else '✗ 错误' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <div class="actions">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">返回首页</a>
+        <a href="{{ url_for('main.quiz') }}" class="btn btn-secondary">重新答题</a>
+    </div>
+</div>
+
+<style>
+.score-summary {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.detailed-results table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.detailed-results th,
+.detailed-results td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.detailed-results th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.correct {
+    background-color: #d4edda;
+}
+
+.wrong {
+    background-color: #f8d7da;
+}
+
+.actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 0 10px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+</style>
+</body>
+</html>

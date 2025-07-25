@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>演讲管理 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>演讲管理</h1>
+            <div class="user-info">
+                <span>欢迎，{{ username }}！</span>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">退出登录</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            <!-- 创建新演讲 -->
+            <div class="card">
+                <h3>创建新演讲</h3>
+                <form method="POST">
+                    {% if session.role == 'organizer' and teachers %}
+                    <div class="form-group">
+                        <label for="creator_id">选择演讲者（老师）:</label>
+                        <select id="creator_id" name="creator_id" required>
+                            <option value="">请选择老师</option>
+                            {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}">{{ teacher.username }} ({{ teacher.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label for="title">演讲标题:</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">演讲描述:</label>
+                        <textarea id="description" name="description" rows="4"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">创建演讲</button>
+                </form>
+            </div>
+
+            <!-- 现有演讲列表 -->
+            <div class="card">
+                <h3>现有演讲</h3>
+                {% if presentations %}
+                    <div class="presentations-list">
+                        {% for presentation in presentations %}
+                            <div class="presentation-item">
+                                <div class="presentation-info">
+                                    <h4>{{ presentation.title }}</h4>
+                                    <p>{{ presentation.description or '暂无描述' }}</p>
+                                    <small>演讲者: {{ presentation.creator.username }}</small><br>
+                                    <small>创建时间: {{ (presentation.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <div class="presentation-actions">
+                                    <a href="{{ url_for('presentation.view_presentation', id=presentation.id) }}" class="btn btn-info">查看详情</a>
+                                    <a href="{{ url_for('quiz.create_quiz', presentation_id=presentation.id) }}" class="btn btn-primary">创建测试</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-data">暂无演讲，请创建第一个演讲。</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="navigation">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+    </div>
+
+    <style>
+        .presentations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .presentation-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .presentation-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        
+        .presentation-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .presentation-info small {
+            color: #999;
+        }
+        
+        .presentation-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</body>
+</html>

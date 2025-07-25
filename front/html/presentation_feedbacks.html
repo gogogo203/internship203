@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>演讲反馈详情 - {{ presentation.title }} - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>演讲反馈详情</h1>
+            <div class="user-info">
+                <span>欢迎，{{ session.username }}！</span>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">退出登录</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            <!-- 演讲基本信息 -->
+            <div class="card">
+                <div class="presentation-header">
+                    <h2>{{ presentation.title }}</h2>
+                    <div class="presentation-meta">
+                        <span class="meta-item">
+                            <strong>演讲者：</strong>{{ presentation.creator.username }}
+                        </span>
+                        <span class="meta-item">
+                            <strong>创建时间：</strong>{{ (presentation.created_at | to_china_time).strftime('%Y年%m月%d日 %H:%M') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 反馈统计概览 -->
+            <div class="card">
+                <h3>反馈统计概览</h3>
+                <div class="feedback-overview">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">{{ total_feedbacks }}</div>
+                            <div class="stat-label">总反馈数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">{{ "%.1f"|format(avg_rating) }}</div>
+                            <div class="stat-label">平均评分</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 评分分布 -->
+                    <div class="rating-distribution">
+                        <h4>评分分布</h4>
+                        <div class="rating-bars">
+                            {% for rating in range(5, 0, -1) %}
+                                <div class="rating-bar">
+                                    <span class="rating-label">{{ rating }}星</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill" style="width: {{ (rating_distribution[rating] / total_feedbacks * 100) if total_feedbacks > 0 else 0 }}%"></div>
+                                    </div>
+                                    <span class="rating-count">{{ rating_distribution[rating] }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细反馈列表 -->
+            <div class="card">
+                <h3>详细反馈列表</h3>
+                {% if feedbacks %}
+                    <div class="feedbacks-list">
+                        {% for feedback in feedbacks %}
+                            <div class="feedback-item">
+                                <div class="feedback-header">
+                                    <div class="feedback-meta">
+                                        <span class="feedback-author">
+                                            {% if feedback.is_anonymous %}
+                                                匿名用户
+                                            {% else %}
+                                                {{ feedback.user.username }}
+                                            {% endif %}
+                                        </span>
+                                        <span class="feedback-date">{{ (feedback.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</span>
+                                    </div>
+                                    <div class="feedback-rating">
+                                        {% for i in range(1, 6) %}
+                                            <span class="star {{ 'filled' if i <= feedback.rating else 'empty' }}">★</span>
+                                        {% endfor %}
+                                        <span class="rating-text">({{ feedback.rating }}/5)</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="feedback-content">
+                                    {% set feedback_data = feedback.content | from_json %}
+                                    
+                                    <!-- 关于演讲者的反馈 -->
+                                    {% if feedback_data.speaker %}
+                                        <div class="feedback-section">
+                                            <h5>关于演讲者：</h5>
+                                            <div class="feedback-tags">
+                                                {% for item in feedback_data.speaker %}
+                                                    <span class="feedback-tag speaker-tag">{{ get_feedback_text(item, 'speaker') }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- 关于题目的反馈 -->
+                                    {% if feedback_data.questions %}
+                                        <div class="feedback-section">
+                                            <h5>关于题目：</h5>
+                                            <div class="feedback-tags">
+                                                {% for item in feedback_data.questions %}
+                                                    <span class="feedback-tag questions-tag">{{ get_feedback_text(item, 'questions') }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- 关于环境的反馈 -->
+                                    {% if feedback_data.environment %}
+                                        <div class="feedback-section">
+                                            <h5>关于环境：</h5>
+                                            <div class="feedback-tags">
+                                                {% for item in feedback_data.environment %}
+                                                    <span class="feedback-tag environment-tag">{{ get_feedback_text(item, 'environment') }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- 额外评论 -->
+                                    {% if feedback_data.additional_comments %}
+                                        <div class="feedback-section">
+                                            <h5>额外评论：</h5>
+                                            <p class="additional-comments">{{ feedback_data.additional_comments }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-data">
+                        <p>该演讲暂无反馈</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="navigation">
+            <a href="{{ url_for('presentation.view_presentation', id=presentation.id) }}" class="btn btn-secondary">返回演讲详情</a>
+            <a href="{{ url_for('presentation.manage_presentations') }}" class="btn btn-secondary">返回演讲管理</a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+    </div>
+
+    <style>
+        .presentation-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .presentation-header h2 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .presentation-meta {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .meta-item {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .feedback-overview {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .rating-distribution h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        .rating-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .rating-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .rating-label {
+            width: 40px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #fd7e14);
+            transition: width 0.3s ease;
+        }
+        
+        .rating-count {
+            width: 30px;
+            text-align: right;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .feedbacks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .feedback-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fff;
+        }
+        
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feedback-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .feedback-author {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .feedback-date {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .feedback-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .star {
+            font-size: 18px;
+        }
+        
+        .star.filled {
+            color: #ffc107;
+        }
+        
+        .star.empty {
+            color: #e9ecef;
+        }
+        
+        .rating-text {
+            font-size: 14px;
+            color: #666;
+            margin-left: 5px;
+        }
+        
+        .feedback-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .feedback-section h5 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .feedback-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .feedback-tag {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .speaker-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .questions-tag {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .environment-tag {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+        
+        .additional-comments {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+        
+        .navigation {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .feedback-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feedback-overview {
+                gap: 20px;
+            }
+        }
+    </style>
+</body>
+</html>

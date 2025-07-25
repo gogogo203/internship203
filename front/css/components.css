@@ -1,0 +1,133 @@
+/* 组件样式 - 可复用的UI组件 */
+
+/* 头部组件 */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.user-info {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 上传容器组件 */
+.upload-container {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 10px;
+    border: 2px dashed #dee2e6;
+    margin: 20px 0;
+}
+
+/* 文件类型提示组件 */
+.file-types {
+    background: #e7f3ff;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.file-types h4 {
+    margin: 0 0 10px 0;
+    color: #0066cc;
+}
+
+.file-types ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.file-types li {
+    margin: 5px 0;
+    color: #333;
+}
+
+/* 文件信息组件 */
+.file-info {
+    background: #e7f3ff;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #0066cc;
+}
+
+/* 问题块组件 */
+.question-block {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.question-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* 选项容器组件 */
+.option-container {
+    margin: 10px 0;
+}
+
+.option-label {
+    display: block;
+    margin: 8px 0;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.option-label:hover {
+    background-color: #f8f9fa;
+}
+
+.option-label.selected {
+    background-color: #e7f3ff;
+    border: 1px solid #b3d7ff;
+}
+
+.option-input {
+    margin-right: 10px;
+}
+
+/* 演示账户组件 */
+.demo-accounts {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.demo-accounts h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.demo-accounts p {
+    margin: 5px 0;
+    color: #666;
+}
+
+/* 结果状态组件 */
+.correct {
+    color: green;
+    font-weight: bold;
+}
+
+.wrong {
+    color: red;
+    font-weight: bold;
+}

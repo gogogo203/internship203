@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>选择演讲反馈 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">选择演讲进行反馈</div>
+            <a href="{{ url_for('main.dashboard') }}" class="logout-btn">返回仪表板</a>
+        </div>
+        
+        <h1>选择演讲进行反馈</h1>
+        
+        {% if presentations %}
+            <div class="presentations-grid">
+                {% for presentation in presentations %}
+                    <div class="presentation-card {% if presentation.id in feedback_presentation_ids %}feedback-submitted{% endif %}">
+                        <div class="presentation-header">
+                            <h3>{{ presentation.title }}</h3>
+                            <span class="presentation-date">{{ presentation.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                        
+                        {% if presentation.description %}
+                            <p class="presentation-description">{{ presentation.description }}</p>
+                        {% endif %}
+                        
+                        <div class="presentation-actions">
+                            {% if presentation.id in feedback_presentation_ids %}
+                                <span class="feedback-status">✓ 已反馈</span>
+                            {% else %}
+                                <a href="{{ url_for('feedback.submit_feedback', presentation_id=presentation.id) }}" class="btn btn-primary">提交反馈</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <p>暂无可反馈的演讲</p>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <style>
+        .presentations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .presentation-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        
+        .presentation-card.feedback-submitted {
+            background: #f8f9fa;
+            border-color: #28a745;
+        }
+        
+        .presentation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .presentation-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .presentation-date {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .presentation-description {
+            color: #666;
+            margin: 10px 0;
+            line-height: 1.4;
+        }
+        
+        .presentation-actions {
+            margin-top: 15px;
+        }
+        
+        .feedback-status {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</body>
+</html>

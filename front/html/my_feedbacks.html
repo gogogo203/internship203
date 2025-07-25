@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>我的反馈 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">我的反馈历史</div>
+            <a href="{{ url_for('main.dashboard') }}" class="logout-btn">返回仪表板</a>
+        </div>
+        
+        <h1>我的反馈历史</h1>
+        
+        {% if feedbacks %}
+            <div class="feedbacks-list">
+                {% for feedback in feedbacks %}
+                    <div class="feedback-card">
+                        <div class="feedback-header">
+                            <h3>{{ feedback.presentation.title }}</h3>
+                            <div class="feedback-meta">
+                                <span class="rating">
+                                    {% for i in range(1, 6) %}
+                                        <span class="star {% if i <= feedback.rating %}filled{% endif %}">★</span>
+                                    {% endfor %}
+                                    <span class="rating-text">{{ feedback.rating }}/5</span>
+                                </span>
+                                <span class="feedback-date">{{ (feedback.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if feedback.presentation.description %}
+                            <p class="presentation-description">{{ feedback.presentation.description }}</p>
+                        {% endif %}
+                        
+                        <!-- 在现有的反馈内容显示部分添加详细反馈解析 -->
+                        {% if feedback.content %}
+                            <div class="feedback-content">
+                                <h4>我的反馈：</h4>
+                                {% set feedback_data = feedback.content | from_json %}
+                                {% if feedback_data %}
+                                    {% if feedback_data.speaker %}
+                                        <div class="feedback-category">
+                                            <strong>关于演讲者：</strong>
+                                            <ul>
+                                                {% for item in feedback_data.speaker %}
+                                                    <li>{{ get_feedback_text(item, 'speaker') }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if feedback_data.questions %}
+                                        <div class="feedback-category">
+                                            <strong>关于题目：</strong>
+                                            <ul>
+                                                {% for item in feedback_data.questions %}
+                                                    <li>{{ get_feedback_text(item, 'questions') }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if feedback_data.environment %}
+                                        <div class="feedback-category">
+                                            <strong>关于环境：</strong>
+                                            <ul>
+                                                {% for item in feedback_data.environment %}
+                                                    <li>{{ get_feedback_text(item, 'environment') }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if feedback_data.additional_comments %}
+                                        <div class="feedback-category">
+                                            <strong>其他意见：</strong>
+                                            <p>{{ feedback_data.additional_comments }}</p>
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <p>{{ feedback.content }}</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="feedback-footer">
+                            {% if feedback.is_anonymous %}
+                                <span class="anonymous-badge">匿名反馈</span>
+                            {% endif %}
+                            <span class="creator-info">演讲者：{{ feedback.presentation.creator.username }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <div class="no-data-icon">📝</div>
+                <h3>暂无反馈记录</h3>
+                <p>您还没有提交过任何演讲反馈</p>
+                <a href="{{ url_for('feedback.select_presentation') }}" class="btn btn-primary">去提交反馈</a>
+            </div>
+        {% endif %}
+        
+        <div class="navigation">
+            <a href="{{ url_for('feedback.select_presentation') }}" class="btn btn-primary">提交新反馈</a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+    </div>
+    
+    <style>
+        .feedbacks-list {
+            margin-top: 20px;
+        }
+        
+        .feedback-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .feedback-header h3 {
+            margin: 0;
+            color: #333;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .feedback-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+        
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .star {
+            color: #ddd;
+            font-size: 16px;
+        }
+        
+        .star.filled {
+            color: #ffc107;
+        }
+        
+        .rating-text {
+            margin-left: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .feedback-date {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .presentation-description {
+            color: #666;
+            font-style: italic;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .feedback-content {
+            margin: 15px 0;
+        }
+        
+        .feedback-content h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .feedback-content p {
+            margin: 0;
+            line-height: 1.5;
+            color: #555;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        
+        .feedback-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .anonymous-badge {
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .creator-info {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .no-data h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .no-data p {
+            margin: 0 0 20px 0;
+        }
+        
+        .navigation {
+            margin-top: 30px;
+            text-align: center;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        @media (max-width: 768px) {
+            .feedback-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .feedback-meta {
+                align-items: flex-start;
+            }
+            
+            .feedback-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .navigation {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

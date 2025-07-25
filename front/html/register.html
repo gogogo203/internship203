@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>用户注册 - PopQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-container">
+            <h1>用户注册</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" id="registerForm">
+                <div class="form-group">
+                    <label for="username">用户名:</label>
+                    <input type="text" id="username" name="username" required 
+                           minlength="3" maxlength="20" 
+                           pattern="[a-zA-Z0-9_]+" 
+                           title="用户名只能包含字母、数字和下划线，长度3-20位">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">邮箱:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码:</label>
+                    <input type="password" id="password" name="password" required 
+                           minlength="6" maxlength="50"
+                           title="密码长度至少6位">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">确认密码:</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="role">角色:</label>
+                    <select id="role" name="role" required>
+                        <option value="audience">听众</option>
+                        <option value="teacher">老师</option>
+                        <option value="organizer">组织者</option>
+                    </select>
+                </div>
+                
+                <button type="submit">注册</button>
+            </form>
+            
+            <p class="auth-link">
+                已有账户？ <a href="{{ url_for('auth.login') }}">立即登录</a>
+            </p>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+    <script>
+        // 密码确认验证
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('两次输入的密码不一致！');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

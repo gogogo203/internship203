@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>老师仪表板 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">欢迎，{{ username }}！（老师）</div>
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">退出登录</a>
+        </div>
+        
+        <h1>老师仪表板</h1>
+        
+        <div class="dashboard-cards">
+            <div class="card">
+                <h3>数据统计</h3>
+                <p>查看学生答题情况和统计报告</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('quiz.organizer_quiz_overview') }}" class="btn btn-secondary">查看统计</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>查看反馈</h3>
+                <p>统一查看所有演讲的反馈信息</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('feedback.all_feedbacks_overview') }}" class="btn btn-primary">查看反馈</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

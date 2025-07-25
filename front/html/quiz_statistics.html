@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ quiz.title }} - 统计分析</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- 添加页面头部操作区域 -->
+        <div class="page-header">
+            <div class="header-left">
+                <h1>{{ quiz.title }} - 统计分析</h1>
+                <div class="quiz-meta">
+                    <span class="meta-item">创建时间：{{ (quiz.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</span>
+                    <span class="meta-item">状态：
+                        {% if quiz.is_active %}
+                            <span class="status active">活跃</span>
+                        {% else %}
+                            <span class="status inactive">已关闭</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('quiz.quiz_participant_list', quiz_id=quiz.id) }}" class="btn btn-info">参与者列表</a>
+                <a href="{{ url_for('quiz.organizer_quiz_overview') }}" class="btn btn-secondary">返回概览</a>
+                <button onclick="confirmDeleteQuiz()" class="btn btn-danger">删除测试</button>
+            </div>
+        </div>
+        
+        <!-- 整体统计 -->
+        <div class="overall-stats">
+            <div class="stat-card">
+                <h3>参与人数</h3>
+                <div class="stat-number">{{ overall_stats.total_participants }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>平均分</h3>
+                <div class="stat-number">{{ overall_stats.avg_score }}%</div>
+            </div>
+            <div class="stat-card">
+                <h3>完成率</h3>
+                <div class="stat-number">{{ overall_stats.completion_rate }}%</div>
+            </div>
+        </div>
+        
+        <!-- 每题统计 -->
+        <div class="question-stats">
+            <h2>题目分析</h2>
+            {% for stat in question_stats %}
+            <div class="question-stat-block">
+                <h3>第{{ stat.question_num }}题 (正确率: {{ stat.accuracy_rate }}%)</h3>
+                <p class="question-text">{{ stat.question_text }}</p>
+                
+                <div class="answer-distribution">
+                    <h4>答案分布:</h4>
+                    {% for option, count in stat.option_distribution.items() %}
+                    <div class="option-stat">
+                        <span>选项{{ ['A', 'B', 'C', 'D'][option|int] }}: </span>
+                        <span>{{ count }}人 ({{ "%.1f"|format((count/stat.total_answers*100) if stat.total_answers > 0 else 0) }}%)</span>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: {{ (count/stat.total_answers*100) if stat.total_answers > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 学生答题详情 -->
+        <div class="student-responses">
+            <h2>学生答题详情</h2>
+            <table class="response-table">
+                <thead>
+                    <tr>
+                        <th>学生</th>
+                        <th>得分</th>
+                        <th>正确题数</th>
+                        <th>答题时间</th>
+                        <th>提交时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for response in responses %}
+                    <tr>
+                        <td>{{ response.user.username }}</td>
+                        <td>{{ "%.1f"|format(response.score) }}%</td>
+                        <td>{{ response.correct_answers }}/{{ response.total_questions }}</td>
+                        <td>{{ response.time_spent }}秒</td>
+                        <td>{{ (response.submitted_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 隐藏的删除表单 -->
+        <form id="deleteQuizForm" action="{{ url_for('quiz.delete_quiz', quiz_id=quiz.id) }}" method="post" style="display: none;">
+        </form>
+    </div>
+    
+    <!-- 添加样式 -->
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        
+        .header-left h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .quiz-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .status.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status.inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .quiz-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+    
+    <!-- 添加JavaScript确认删除功能 -->
+    <script>
+        function confirmDeleteQuiz() {
+            if (confirm('确定要删除测试 "{{ quiz.title }}" 吗？\n\n注意：删除后将无法恢复，所有相关的答题记录也会被删除！')) {
+                document.getElementById('deleteQuizForm').submit();
+            }
+        }
+        
+        // 分数分布图表 -->
+        <div class="score-distribution">
+            <h2>分数分布</h2>
+            <div class="score-ranges">
+                <div class="score-range">
+                    <span>90-100分:</span>
+                    <span id="score-90-100">0人</span>
+                </div>
+                <div class="score-range">
+                    <span>80-89分:</span>
+                    <span id="score-80-89">0人</span>
+                </div>
+                <div class="score-range">
+                    <span>70-79分:</span>
+                    <span id="score-70-79">0人</span>
+                </div>
+                <div class="score-range">
+                    <span>60-69分:</span>
+                    <span id="score-60-69">0人</span>
+                </div>
+                <div class="score-range">
+                    <span>60分以下:</span>
+                    <span id="score-below-60">0人</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 导出功能 -->
+        <div class="export-section">
+            <h2>数据导出</h2>
+            <button onclick="exportToCSV()" class="btn btn-primary">导出CSV</button>
+            <button onclick="exportToPDF()" class="btn btn-secondary">导出PDF报告</button>
+        </div>
+        
+        <script>
+        // 计算分数分布
+        function calculateScoreDistribution() {
+            const scores = [
+                {% for response in responses %}
+                    {{ response.score }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            const distribution = {
+                '90-100': 0,
+                '80-89': 0,
+                '70-79': 0,
+                '60-69': 0,
+                'below-60': 0
+            };
+            
+            scores.forEach(score => {
+                if (score >= 90) distribution['90-100']++;
+                else if (score >= 80) distribution['80-89']++;
+                else if (score >= 70) distribution['70-79']++;
+                else if (score >= 60) distribution['60-69']++;
+                else distribution['below-60']++;
+            });
+            
+            // 更新页面显示
+            document.getElementById('score-90-100').textContent = distribution['90-100'] + '人';
+            document.getElementById('score-80-89').textContent = distribution['80-89'] + '人';
+            document.getElementById('score-70-79').textContent = distribution['70-79'] + '人';
+            document.getElementById('score-60-69').textContent = distribution['60-69'] + '人';
+            document.getElementById('score-below-60').textContent = distribution['below-60'] + '人';
+        }
+        
+        // 导出CSV
+        function exportToCSV() {
+            const data = [
+                {% for response in responses %}
+                {
+                    username: '{{ response.user.username }}',
+                    score: {{ response.score }},
+                    correct_answers: {{ response.correct_answers }},
+                    total_questions: {{ response.total_questions }},
+                    submitted_at: '{{ response.submitted_at.strftime("%Y-%m-%d %H:%M") }}'
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            
+            let csv = '学生姓名,得分,正确题数,总题数,提交时间\n';
+            
+            data.forEach(response => {
+                csv += `${response.username},${response.score},${response.correct_answers},${response.total_questions},${response.submitted_at}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '{{ quiz.title }}_统计数据.csv';
+            a.click();
+        }
+        
+        // 页面加载时计算分数分布
+        document.addEventListener('DOMContentLoaded', calculateScoreDistribution);
+        </script>
+    </script>
+</body>
+</html>

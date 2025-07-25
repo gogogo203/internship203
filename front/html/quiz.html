@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Quiz</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    /* 确保radio按钮正常工作的样式 */
+    .option-input {
+      margin-right: 10px;
+      transform: scale(1.2);
+      accent-color: #667eea;
+      /* 重要：确保radio按钮可以正常点击 */
+      pointer-events: auto !important;
+      position: relative;
+      z-index: 10;
+    }
+    
+    .option-label {
+      display: flex;
+      align-items: center;
+      margin: 12px 0;
+      padding: 15px 20px;
+      cursor: pointer;
+      border-radius: 15px;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px solid rgba(102, 126, 234, 0.2);
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+      /* 确保label不会阻止radio按钮的点击 */
+      user-select: none;
+    }
+    
+    .option-label:hover {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: #667eea;
+      transform: translateX(5px);
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+    }
+    
+    .option-label.selected {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+      border-color: #667eea;
+      color: #4a5568;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="user-info">用户：{{ session.username or '用户' }}</div>
+      <a href="{{ url_for('main.dashboard') }}" class="home-link">返回首页</a>
+    </div>
+    
+    {% if filename %}
+    <div class="file-info">
+      基于文件 "{{ filename }}" 生成的选择题
+    </div>
+    {% endif %}
+
+    <h2>选择题测试</h2>
+    <form method="POST" action="{{ url_for('main.submit') }}" id="quizForm">
+      <input type="hidden" name="total" value="{{ questions|length }}">
+
+      {% for question in questions %}
+      {% set question_index = loop.index0 %}
+      <div class="question-block">
+        <div class="question-title">{{ loop.index }}. {{ question.question }}</div>
+        
+        <div class="option-container">
+          {% for option in question.options %}
+            {% set option_letter = ['A', 'B', 'C', 'D'][loop.index0] %}
+            {% set option_id = 'q' + question_index|string + '_' + option_letter %}
+            <label class="option-label" for="{{ option_id }}">
+              <input type="radio" 
+                     class="option-input"
+                     id="{{ option_id }}"
+                     name="q{{ question_index }}" 
+                     value="{{ option_letter }}">
+              {{ option_letter }}. {{ option }}
+            </label>
+          {% endfor %}
+        </div>
+        
+        <input type="hidden" name="answer{{ question_index }}" value="{{ question.answer }}">
+      </div>
+      {% endfor %}
+
+      <button type="submit">提交答案</button>
+    </form>
+  </div>
+
+  <!-- 引用外部JavaScript文件来处理交互 -->
+  <script src="{{ url_for('static', filename='js/ui-interactions.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+  <script>
+    // 页面加载完成后初始化功能
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化UI交互功能（处理radio button高亮）
+      initUIInteractions();
+      
+      // 初始化表单验证
+      initQuizFormValidation();
+    });
+  </script>
+</body>
+</html>

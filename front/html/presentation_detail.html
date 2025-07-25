@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>演讲详情 - {{ presentation.title }} - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>演讲详情</h1>
+            <div class="user-info">
+                <span>欢迎，{{ session.username }}！</span>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">退出登录</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            <!-- 演讲基本信息 -->
+            <div class="card">
+                <div class="presentation-header">
+                    <h2>{{ presentation.title }}</h2>
+                    <div class="presentation-meta">
+                        <span class="meta-item">
+                            <strong>演讲者：</strong>{{ presentation.creator.username }}
+                        </span>
+                        <span class="meta-item">
+                            <strong>创建时间：</strong>{{ (presentation.created_at | to_china_time).strftime('%Y年%m月%d日 %H:%M') }}
+                        </span>
+                        <span class="meta-item">
+                            <strong>状态：</strong>
+                            <span class="status-badge {{ 'active' if presentation.is_active else 'inactive' }}">
+                                {{ '活跃' if presentation.is_active else '已停用' }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                
+                {% if presentation.description %}
+                <div class="presentation-description">
+                    <h3>演讲描述</h3>
+                    <p>{{ presentation.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 相关测试 -->
+            <div class="card">
+                <h3>相关测试</h3>
+                {% if presentation.quizzes %}
+                    <div class="quizzes-list">
+                        {% for quiz in presentation.quizzes %}
+                            <div class="quiz-item">
+                                <div class="quiz-info">
+                                    <h4>{{ quiz.title }}</h4>
+                                    <div class="quiz-meta">
+                                        <span>创建时间：{{ (quiz.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</span>
+                                        <span>时间限制：{{ quiz.time_limit // 60 }}分钟</span>
+                                        <span class="status-badge {{ 'active' if quiz.is_active else 'inactive' }}">
+                                            {{ '活跃' if quiz.is_active else '已停用' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="quiz-actions">
+                                    <a href="{{ url_for('quiz.view_quiz_statistics', quiz_id=quiz.id) }}" class="btn btn-info">查看统计</a>
+                                    {% if session.role in ['teacher', 'organizer'] %}
+                                        <a href="{{ url_for('quiz.quiz_participant_list', quiz_id=quiz.id) }}" class="btn btn-primary">参与者列表</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-data">该演讲暂无相关测试</p>
+                    {% if session.role in ['teacher', 'organizer'] %}
+                        <a href="http://127.0.0.1:5000/create-quiz-from-file" class="btn btn-primary">创建测试</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- 演讲反馈 -->
+            {% if session.role in ['teacher', 'organizer'] %}
+            <div class="card">
+                <h3>演讲反馈</h3>
+                {% if presentation.feedbacks %}
+                    <div class="feedback-summary">
+                        <div class="feedback-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ presentation.feedbacks|length }}</span>
+                                <span class="stat-label">总反馈数</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ "%.1f"|format((presentation.feedbacks|sum(attribute='rating')) / (presentation.feedbacks|length)) }}</span>
+                                <span class="stat-label">平均评分</span>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('feedback.view_presentation_feedbacks', presentation_id=presentation.id) }}" class="btn btn-primary">查看详细反馈</a>
+                    </div>
+                {% else %}
+                    <p class="no-data">该演讲暂无反馈</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="navigation">
+            <a href="{{ url_for('presentation.manage_presentations') }}" class="btn btn-secondary">返回演讲管理</a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+    </div>
+
+    <style>
+        .presentation-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .presentation-header h2 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .presentation-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .meta-item {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-badge.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .presentation-description {
+            margin-top: 20px;
+        }
+        
+        .presentation-description h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .presentation-description p {
+            line-height: 1.6;
+            color: #666;
+        }
+        
+        .quizzes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .quiz-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .quiz-info h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+        }
+        
+        .quiz-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .quiz-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .feedback-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .feedback-stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        .navigation {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ quiz.title }} - 答题</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="quiz-header">
+            <h1>{{ quiz.title }}</h1>
+            <div class="quiz-info">
+                <span>时间限制: {{ quiz.time_limit // 60 }}分钟</span>
+                <span id="timer" class="timer">{{ quiz.time_limit // 60 }}:00</span>
+            </div>
+        </div>
+        
+        <form id="quizForm" action="{{ url_for('quiz.submit_quiz_response', quiz_id=quiz.id) }}" method="post">
+            <input type="hidden" name="time_spent" id="timeSpent" value="0">
+            
+            {% for question in questions %}
+            {% set question_index = loop.index0 %}
+                <div class="question-card" id="question-{{ question_index }}">
+                    <div class="question-header">
+                        <span class="question-number">题目 {{ loop.index }} / {{ questions|length }}</span>
+                    </div>
+                    
+                    <div class="question-content">
+                        <h3>{{ question.question }}</h3>
+                        
+                        <div class="options">
+                            {% for option in question.options %}
+                            {% set option_letter = ['A', 'B', 'C', 'D'][loop.index0] %}
+                                <label class="option-label">
+                                    <input type="radio" name="q{{ question_index }}" value="{{ option_letter }}" required>
+                                    <span class="option-text">{{ option_letter }}. {{ option }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <div class="quiz-navigation">
+                <button type="button" id="prevBtn" class="btn btn-secondary" onclick="changeQuestion(-1)">上一题</button>
+                <span id="questionIndicator">1 / {{ questions|length }}</span>
+                <button type="button" id="nextBtn" class="btn btn-primary" onclick="changeQuestion(1)">下一题</button>
+                <button type="submit" id="submitBtn" class="btn btn-success" style="display: none;">提交答案</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let currentQuestion = 0;
+        const totalQuestions = {{ questions|length }};
+        let startTime = Date.now();
+        let timeLimit = {{ quiz.time_limit }} * 1000; // 转换为毫秒
+        
+        // 计时器
+        function updateTimer() {
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, timeLimit - elapsed);
+            
+            if (remaining === 0) {
+                alert('时间到！自动提交答案。');
+                document.getElementById('quizForm').submit();
+                return;
+            }
+            
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // 更新已用时间
+            document.getElementById('timeSpent').value = Math.floor(elapsed / 1000);
+        }
+        
+        setInterval(updateTimer, 1000);
+        
+        // 题目导航
+        function showQuestion(n) {
+            const questions = document.querySelectorAll('.question-card');
+            questions.forEach((q, i) => {
+                q.style.display = i === n ? 'block' : 'none';
+            });
+            
+            document.getElementById('prevBtn').style.display = n === 0 ? 'none' : 'inline-block';
+            document.getElementById('nextBtn').style.display = n === totalQuestions - 1 ? 'none' : 'inline-block';
+            document.getElementById('submitBtn').style.display = n === totalQuestions - 1 ? 'inline-block' : 'none';
+            
+            document.getElementById('questionIndicator').textContent = `${n + 1} / ${totalQuestions}`;
+        }
+        
+        function changeQuestion(direction) {
+            const newQuestion = currentQuestion + direction;
+            if (newQuestion >= 0 && newQuestion < totalQuestions) {
+                currentQuestion = newQuestion;
+                showQuestion(currentQuestion);
+            }
+        }
+        
+        // 初始化
+        showQuestion(0);
+        
+        // 防止意外离开
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = '确定要离开吗？答题进度将丢失。';
+        });
+        
+        // 提交时移除离开警告
+        document.getElementById('quizForm').addEventListener('submit', function() {
+            window.removeEventListener('beforeunload', arguments.callee);
+        });
+    </script>
+    
+    <style>
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        
+        .quiz-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .timer {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .question-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .question-header {
+            margin-bottom: 20px;
+        }
+        
+        .question-number {
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .question-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .option-label:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        
+        .option-label input[type="radio"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+        
+        .option-label input[type="radio"]:checked + .option-text {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .option-label:has(input[type="radio"]:checked) {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+        
+        .quiz-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        #questionIndicator {
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</body>
+</html>

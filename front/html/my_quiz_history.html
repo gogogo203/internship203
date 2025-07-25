@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>我的答题历史 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">我的答题历史</div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+        
+        <h1>答题历史与统计</h1>
+        
+        {% if responses %}
+            <!-- 统计概览 -->
+            <div class="stats-overview">
+                <div class="stat-card">
+                    <h3>{{ responses|length }}</h3>
+                    <p>总测试数</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ "%.1f"|format(responses|map(attribute='score')|sum / responses|length) }}%</h3>
+                    <p>平均得分</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ responses|selectattr('score', 'ge', 80)|list|length }}</h3>
+                    <p>优秀次数(≥80%)</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ "%.1f"|format(stats.avg_rank) if stats.avg_rank else 'N/A' }}</h3>
+                    <p>平均排名</p>
+                </div>
+            </div>
+            
+            <!-- 答题记录列表 -->
+            <div class="history-list">
+                {% for response in responses %}
+                    <div class="history-card">
+                        <div class="history-header">
+                            <h3>{{ response.quiz.title }}</h3>
+                            <div class="score-info">
+                                <span class="score {{ 'excellent' if response.score >= 80 else 'good' if response.score >= 60 else 'poor' }}">
+                                    {{ "%.1f"|format(response.score) }}%
+                                </span>
+                                <span class="rank-badge">
+                                    第{{ response.rank }}名/{{ response.total_participants }}人
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="history-details">
+                            <div class="detail-row">
+                                <span><strong>演讲：</strong>{{ response.quiz.presentation.title }}</span>
+                                <span><strong>答题时间：</strong>{{ (response.submitted_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span><strong>正确率：</strong>{{ response.correct_answers }} / {{ response.total_questions }} ({{ "%.1f"|format(response.accuracy_rate) }}%)</span>
+                                <span><strong>用时：</strong>{{ response.time_spent // 60 }}分{{ response.time_spent % 60 }}秒</span>
+                            </div>
+                            <div class="detail-row">
+                                <span><strong>排名：</strong>
+                                    {% set same_rank_count = [] %}
+                                    {% for r in responses if r.quiz_id == response.quiz_id and r.score == response.score %}
+                                        {% set _ = same_rank_count.append(1) %}
+                                    {% endfor %}
+                                    {% if same_rank_count|length > 1 %}
+                                        并列第{{ response.rank }}名 ({{ same_rank_count|length }}人并列)
+                                    {% else %}
+                                        第{{ response.rank }}名
+                                    {% endif %}
+                                    / 共{{ response.total_participants }}人参与
+                                </span>
+                                <span><strong>超越：</strong>{{ "%.1f"|format((response.total_participants - response.rank) / response.total_participants * 100) }}% 的参与者</span>
+                            </div>
+                        </div>
+                        
+                        <div class="history-actions">
+                            <a href="{{ url_for('quiz.view_quiz_result', response_id=response.id) }}" class="btn btn-info">查看详情</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-content">
+                <p>您还没有参与过任何测试。</p>
+                <a href="{{ url_for('quiz.available_quizzes') }}" class="btn btn-primary">查看可用测试</a>
+            </div>
+        {% endif %}
+        <div class="navigation">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+            <a href="{{ url_for('quiz.available_quizzes') }}" class="btn btn-primary">参与新测试</a>
+        </div>
+    </div>
+    
+    <style>
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .score-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        
+        .rank-badge {
+            background: #6c757d;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .detail-row span {
+            flex: 1;
+        }
+        
+        .detail-row span:last-child {
+            text-align: right;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2em;
+            margin: 0 0 10px 0;
+        }
+        
+        .stat-card p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .history-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .score {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .score.excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .score.good {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .score.poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .history-details {
+            margin-bottom: 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .history-actions {
+            text-align: right;
+        }
+    </style>
+</body>
+</html>

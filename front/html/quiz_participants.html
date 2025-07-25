@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ quiz.title }} - 参与者列表</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ quiz.title }} - 参与者列表</h1>
+            <div class="header-actions">
+                <a href="{{ url_for('quiz.view_quiz_statistics', quiz_id=quiz.id) }}" class="btn btn-info">查看统计</a>
+                <a href="{{ url_for('quiz.organizer_quiz_overview') }}" class="btn btn-secondary">返回概览</a>
+            </div>
+        </div>
+        
+        <!-- 基本信息 -->
+        <div class="quiz-info-card">
+            <div class="info-row">
+                <span><strong>测验标题：</strong>{{ quiz.title }}</span>
+                <span><strong>参与人数：</strong>{{ responses|length }}人</span>
+            </div>
+            <div class="info-row">
+                <span><strong>创建时间：</strong>{{ (quiz.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</span>
+                <span><strong>时间限制：</strong>{{ quiz.time_limit // 60 }}分钟</span>
+            </div>
+            <div class="info-row">
+                <span><strong>状态：</strong>
+                    {% if quiz.is_active %}
+                        <span class="status active">活跃</span>
+                    {% else %}
+                        <span class="status inactive">已关闭</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- 参与者列表 -->
+        <div class="participants-section">
+            <h2>参与者详情</h2>
+            
+            {% if responses %}
+                <!-- 统计摘要 -->
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ responses|length }}</span>
+                        <span class="stat-label">总参与人数</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ "%.1f"|format((responses|sum(attribute='score'))/responses|length) }}%</span>
+                        <span class="stat-label">平均得分</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ responses|selectattr('score', 'ge', 80)|list|length }}</span>
+                        <span class="stat-label">优秀人数(≥80分)</span>
+                    </div>
+                </div>
+                
+                <!-- 参与者表格 -->
+                <div class="table-container">
+                    <table class="participants-table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>学生姓名</th>
+                                <th>邮箱</th>
+                                <th>得分</th>
+                                <th>正确题数</th>
+                                <th>答题时间</th>
+                                <th>提交时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for response in responses|sort(attribute='score', reverse=true) %}
+                            <tr class="{% if response.score >= 90 %}excellent{% elif response.score >= 80 %}good{% elif response.score >= 60 %}pass{% else %}fail{% endif %}">
+                                <td>{{ loop.index }}</td>
+                                <td>{{ response.user.username }}</td>
+                                <td>{{ response.user.email }}</td>
+                                <td>
+                                    <span class="score-badge">{{ "%.1f"|format(response.score) }}%</span>
+                                </td>
+                                <td>{{ response.correct_answers }}/{{ response.total_questions }}</td>
+                                <td>{{ response.time_spent }}秒</td>
+                                <td>{{ (response.submitted_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('quiz.view_quiz_result', response_id=response.id) }}" class="btn btn-sm btn-primary">查看详情</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 导出功能 -->
+                <div class="export-section">
+                    <h3>数据导出</h3>
+                    <button onclick="exportParticipantsToCSV()" class="btn btn-success">导出参与者数据</button>
+                    <button onclick="window.print()" class="btn btn-info">打印列表</button>
+                </div>
+            {% else %}
+                <div class="no-data">
+                    <p>暂无参与者数据</p>
+                    <p>该测验还没有人参与答题。</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <style>
+        .quiz-info-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status.inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .summary-stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            display: block;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        .participants-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .participants-table th {
+            background: #343a40;
+            color: white;
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .participants-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .participants-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .participants-table tr.excellent {
+            background-color: #d4edda;
+        }
+        
+        .participants-table tr.good {
+            background-color: #d1ecf1;
+        }
+        
+        .participants-table tr.pass {
+            background-color: #fff3cd;
+        }
+        
+        .participants-table tr.fail {
+            background-color: #f8d7da;
+        }
+        
+        .score-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+            background: #007bff;
+        }
+        
+        .export-section {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .export-section h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .no-data p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+    
+    <script>
+        function exportParticipantsToCSV() {
+            const data = [
+                {% for response in responses %}
+                {
+                    rank: {{ loop.index }},
+                    username: '{{ response.user.username }}',
+                    email: '{{ response.user.email }}',
+                    score: {{ response.score }},
+                    correct_answers: {{ response.correct_answers }},
+                    total_questions: {{ response.total_questions }},
+                    time_spent: {{ response.time_spent }},
+                    submitted_at: '{{ response.submitted_at.strftime("%Y-%m-%d %H:%M") }}'
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            
+            let csv = '排名,学生姓名,邮箱,得分(%),正确题数,总题数,答题时间(秒),提交时间\n';
+            
+            data.forEach(participant => {
+                csv += `${participant.rank},${participant.username},${participant.email},${participant.score},${participant.correct_answers},${participant.total_questions},${participant.time_spent},${participant.submitted_at}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '{{ quiz.title }}_参与者列表.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

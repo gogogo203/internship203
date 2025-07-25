@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>所有反馈概览 - PopQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container">
+            <h1 class="logo"><a href="{{ url_for('main.index') }}">PopQuiz</a></h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('main.dashboard') }}">组织者仪表板</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">登出</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container content-section">
+        <h2>所有演讲反馈概览</h2>
+        
+        <!-- 整体统计 -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <h3>总演讲数</h3>
+                <p class="stat-number">{{ overall_stats.total_presentations }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>总反馈数</h3>
+                <p class="stat-number">{{ overall_stats.total_feedbacks }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>整体平均评分</h3>
+                <p class="stat-number">{{ overall_stats.overall_avg_rating }}★</p>
+            </div>
+        </div>
+
+        <!-- 演讲反馈列表 -->
+        <div class="presentations-list">
+            {% for stat in presentation_stats %}
+            <div class="presentation-card">
+                <div class="presentation-header">
+                    <h3>{{ stat.presentation.title }}</h3>
+                    <span class="presentation-date">{{ stat.presentation.created_at.strftime('%Y-%m-%d') }}</span>
+                </div>
+                
+                <div class="presentation-stats">
+                    <div class="stat-item">
+                        <span class="label">反馈数量:</span>
+                        <span class="value">{{ stat.feedback_count }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">平均评分:</span>
+                        <span class="value rating">{{ stat.avg_rating }}★</span>
+                    </div>
+                </div>
+                
+                {% if stat.feedback_count > 0 %}
+                <div class="rating-distribution">
+                    <h4>评分分布:</h4>
+                    <div class="rating-bars">
+                        {% for i in range(5, 0, -1) %}
+                        <div class="rating-bar">
+                            <span class="star-label">{{ i }}★</span>
+                            <div class="bar-container">
+                                <div class="bar" style="width: {{ (stat.rating_distribution[i] / stat.feedback_count * 100) if stat.feedback_count > 0 else 0 }}%"></div>
+                            </div>
+                            <span class="count">{{ stat.rating_distribution[i] }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="actions">
+                    <a href="{{ url_for('feedback.view_presentation_feedbacks', presentation_id=stat.presentation.id) }}" class="btn btn-primary">查看详细反馈</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if not presentation_stats %}
+        <div class="empty-state">
+            <p>暂无演讲数据</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <style>
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 0;
+        }
+        
+        .presentations-list {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .presentation-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .presentation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .presentation-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .presentation-date {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .presentation-stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .stat-item .label {
+            color: #666;
+        }
+        
+        .stat-item .value {
+            font-weight: bold;
+        }
+        
+        .rating {
+            color: #ffc107;
+        }
+        
+        .rating-distribution {
+            margin: 15px 0;
+        }
+        
+        .rating-distribution h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .rating-bars {
+            display: grid;
+            gap: 5px;
+        }
+        
+        .rating-bar {
+            display: grid;
+            grid-template-columns: 30px 1fr 30px;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .star-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .bar-container {
+            background: #f0f0f0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .bar {
+            background: #ffc107;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .count {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+        
+        .actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</body>
+</html>

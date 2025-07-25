@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>提交反馈 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">为演讲提交反馈</div>
+            <a href="{{ url_for('feedback.select_presentation') }}" class="logout-btn">返回选择</a>
+        </div>
+        
+        <h1>为「{{ presentation.title }}」提交反馈</h1>
+        
+        {% if existing_feedback %}
+            <div class="alert alert-info">
+                您已经对该演讲提交过反馈，无法重复提交。
+            </div>
+        {% else %}
+            <form method="post" class="feedback-form">
+                <!-- 整体评分 -->
+                <div class="form-section">
+                    <h3>整体评分</h3>
+                    <div class="form-group">
+                        <label for="rating">总体满意度 *</label>
+                        <div class="rating-input">
+                            {% for i in range(5, 0, -1) %}
+                                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                                <label for="star{{ i }}" class="star">★</label>
+                            {% endfor %}
+                        </div>
+                        <small class="form-text">请选择1-5星评分</small>
+                    </div>
+                </div>
+                
+                <!-- 关于演讲者的反馈 -->
+                <div class="form-section">
+                    <h3>关于演讲者</h3>
+                    <div class="form-group">
+                        <label>演讲节奏</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="too_fast">
+                                讲得太快
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="too_slow">
+                                讲得太慢
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="good_pace">
+                                节奏适中
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>演讲内容</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="boring">
+                                演讲内容太乏味
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="engaging">
+                                演讲内容生动有趣
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="clear_explanation">
+                                讲解清晰易懂
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="unclear_explanation">
+                                讲解不够清晰
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>演讲技巧</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="good_interaction">
+                                互动性强
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="lack_interaction">
+                                缺乏互动
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="confident">
+                                演讲自信
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="speaker_feedback" value="nervous">
+                                显得紧张
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 关于题目的反馈 -->
+                <div class="form-section">
+                    <h3>关于测试题目</h3>
+                    <div class="form-group">
+                        <label>题目质量</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="poor_quality">
+                                题目出得质量不好
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="good_quality">
+                                题目质量很好
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="ambiguous">
+                                题目表述不清
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>题目难度</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="too_deep">
+                                题目太深
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="too_shallow">
+                                题目太浅显
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="appropriate_difficulty">
+                                难度适中
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>题目相关性</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="irrelevant">
+                                和演讲内容不相关
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="highly_relevant">
+                                与内容高度相关
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="partially_relevant">
+                                部分相关
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>题目数量</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="too_many">
+                                题目太多
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="too_few">
+                                题目太少
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="question_feedback" value="appropriate_amount">
+                                数量合适
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 关于环境的反馈 -->
+                <div class="form-section">
+                    <h3>关于演讲环境</h3>
+                    <div class="form-group">
+                        <label>教室环境</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="poor_classroom">
+                                教室环境不好
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="good_classroom">
+                                教室环境很好
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="too_crowded">
+                                空间太拥挤
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="poor_lighting">
+                                光线不足
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>音响设备</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="poor_audio">
+                                音响效果差
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="good_audio">
+                                音响效果好
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="volume_too_low">
+                                音量太小
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="volume_too_high">
+                                音量太大
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>投影设备</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="poor_projection">
+                                投影效果不清晰
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="good_projection">
+                                投影效果清晰
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="screen_too_small">
+                                屏幕太小
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>其他环境因素</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="noisy">
+                                环境太嘈杂
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="temperature_uncomfortable">
+                                温度不适宜
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="poor_ventilation">
+                                通风不良
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="environment_feedback" value="comfortable_environment">
+                                环境舒适
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 详细文字反馈 -->
+                <div class="form-section">
+                    <h3>详细反馈</h3>
+                    <div class="form-group">
+                        <label for="content">其他建议和意见</label>
+                        <textarea id="content" name="content" rows="6" placeholder="请分享您的其他看法、建议或感受..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 匿名选项 -->
+                <div class="form-section">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="is_anonymous">
+                            匿名反馈（您的姓名将不会显示给演讲者）
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">提交反馈</button>
+                    <a href="{{ url_for('feedback.select_presentation') }}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+    
+    <style>
+        .feedback-form {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-section:last-of-type {
+            border-bottom: none;
+        }
+        
+        .form-section h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 18px;
+            border-left: 4px solid #007bff;
+            padding-left: 12px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .checkbox-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .rating-input {
+            display: flex;
+            flex-direction: row;  /* 改为正常顺序 */
+            justify-content: flex-start;  /* 改为左对齐 */
+            margin: 10px 0;
+        }
+        
+        .rating-input input[type="radio"] {
+            display: none;
+        }
+        
+        .rating-input .star {
+            font-size: 30px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        /* 修改hover和选中效果 */
+        .rating-input input[type="radio"]:checked ~ .star {
+            color: #ffc107;
+        }
+        
+        .rating-input .star:hover {
+            color: #ffc107;
+        }
+        
+        /* 当hover某个星星时，它前面的星星也要亮起 */
+        .rating-input .star:hover ~ .star {
+            color: #ffc107;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+        
+        .form-text {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        @media (max-width: 768px) {
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

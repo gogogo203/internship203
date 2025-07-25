@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>测试统计概览 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">测试统计概览</div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+        
+        <h1>测试统计概览</h1>
+        
+        <!-- 整体统计 -->
+        <div class="stats-summary">
+            <div class="stat-card">
+                <h3>{{ total_quizzes }}</h3>
+                <p>总测试数</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ total_participants }}</h3>
+                <p>总参与人数</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ active_quizzes }}</h3>
+                <p>活跃测试</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ avg_completion_rate }}%</h3>
+                <p>平均完成率</p>
+            </div>
+        </div>
+        
+        <!-- 测试列表 -->
+        <div class="quiz-list">
+            <h2>所有测试</h2>
+            
+            {% for quiz_stat in quiz_stats %}
+                <div class="quiz-stat-card">
+                    <div class="quiz-header">
+                        <h3>{{ quiz_stat.quiz.title }}</h3>
+                        <div class="quiz-actions">
+                            <a href="{{ url_for('quiz.view_quiz_statistics', quiz_id=quiz_stat.quiz.id) }}" class="btn btn-info">详细统计</a>
+                            <a href="{{ url_for('quiz.quiz_participant_list', quiz_id=quiz_stat.quiz.id) }}" class="btn btn-primary">参与者列表</a>
+                            <button onclick="confirmDelete({{ quiz_stat.quiz.id }}, '{{ quiz_stat.quiz.title }}')" class="btn btn-danger">删除测试</button>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-info">
+                        <div class="info-row">
+                            <span><strong>演讲：</strong>{{ quiz_stat.quiz.presentation.title if quiz_stat.quiz.presentation else '无关联演讲' }}</span>
+                            <span><strong>创建时间：</strong>{{ (quiz_stat.quiz.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span><strong>时间限制：</strong>{{ quiz_stat.quiz.time_limit // 60 }}分钟</span>
+                            <span><strong>状态：</strong>
+                                {% if quiz_stat.quiz.is_active %}
+                                    <span class="status active">活跃</span>
+                                {% else %}
+                                    <span class="status inactive">已关闭</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ quiz_stat.total_responses }}</span>
+                            <span class="stat-label">参与人数</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ quiz_stat.avg_score }}%</span>
+                            <span class="stat-label">平均得分</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ quiz_stat.completion_rate }}%</span>
+                            <span class="stat-label">完成率</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ quiz_stat.excellent_count }}</span>
+                            <span class="stat-label">优秀(≥80%)</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- 隐藏的删除表单 -->
+    <form id="deleteForm" method="POST" style="display: none;">
+        <input type="hidden" name="_method" value="DELETE">
+    </form>
+    
+    <script>
+        function confirmDelete(quizId, quizTitle) {
+            if (confirm(`确定要删除测试 "${quizTitle}" 吗？\n\n删除后将无法恢复，所有相关的答题记录也会被删除。`)) {
+                const form = document.getElementById('deleteForm');
+                form.action = `/${quizId}/delete`;
+                form.submit();
+            }
+        }
+    </script>
+    
+    <style>
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2em;
+            margin: 0 0 10px 0;
+        }
+        
+        .quiz-stat-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .quiz-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .quiz-info {
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .quiz-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            display: block;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border: 1px solid #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+    </style>
+</body>
+</html>

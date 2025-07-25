@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>可用测试 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">{{ username }} - 可用测试</div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+        
+        <h1>可用测试</h1>
+        
+        {% if quizzes %}
+            <div class="quiz-list">
+                {% for quiz in quizzes %}
+                    <div class="quiz-card">
+                        <div class="quiz-header">
+                            <h3>{{ quiz.title }}</h3>
+                            <span class="quiz-id">ID: {{ quiz.id }}</span>
+                        </div>
+                        <div class="quiz-info">
+                            <p><strong>演讲：</strong>{{ quiz.presentation.title }}</p>
+                            <p><strong>时间限制：</strong>{{ quiz.time_limit // 60 }}分钟</p>
+                            <p><strong>创建时间：</strong>{{ (quiz.created_at | to_china_time).strftime('%Y-%m-%d %H:%M') }}</p>
+                            {% if quiz.id in completed_quiz_ids %}
+                                <p class="status completed">✓ 已完成</p>
+                                <a href="{{ url_for('quiz.view_quiz_result', response_id=user_responses[quiz.id].id) }}" class="btn btn-info">查看结果</a>
+                            {% else %}
+                                <p class="status available">可参与</p>
+                                <a href="{{ url_for('quiz.join_quiz_session', quiz_id=quiz.id) }}" class="btn btn-primary">开始答题</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-content">
+                <p>当前没有可用的测试。</p>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">返回仪表板</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <style>
+        .quiz-list {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .quiz-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .quiz-id {
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .quiz-info p {
+            margin: 8px 0;
+        }
+        
+        .status {
+            font-weight: bold;
+        }
+        
+        .status.completed {
+            color: #28a745;
+        }
+        
+        .status.available {
+            color: #007bff;
+        }
+        
+        .no-content {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</body>
+</html>

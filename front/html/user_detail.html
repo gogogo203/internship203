@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>用户详情 - {{ user.username }} - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">用户详情</div>
+            <a href="{{ url_for('user.manage_users') }}" class="btn btn-secondary">返回用户管理</a>
+        </div>
+        
+        <h1>用户详情 - {{ user.username }}</h1>
+        
+        <div class="user-detail-section">
+            <div class="card">
+                <h3>基本信息</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>用户名：</label>
+                        <span>{{ user.username }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>邮箱：</label>
+                        <span>{{ user.email or '未设置' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>角色：</label>
+                        <span class="role-badge role-{{ user.role }}">
+                            {% if user.role == 'organizer' %}组织者
+                            {% elif user.role == 'teacher' %}老师
+                            {% elif user.role == 'audience' %}听众
+                            {% else %}{{ user.role }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <label>注册时间：</label>
+                        <span>{{ (user.created_at | to_china_time).strftime('%Y-%m-%d %H:%M:%S') if user.created_at else '未知' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>最后登录：</label>
+                        <span>{{ (user.last_login | to_china_time).strftime('%Y-%m-%d %H:%M:%S') if user.last_login else '从未登录' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>状态：</label>
+                        <span class="status-badge status-active">正常</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="actions-section">
+                <a href="{{ url_for('user.edit_user', user_id=user.id) }}" class="btn btn-warning">编辑用户</a>
+                <a href="{{ url_for('user.manage_users') }}" class="btn btn-secondary">返回列表</a>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .user-detail-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .detail-item label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .detail-item span {
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .role-organizer {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .role-teacher {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .role-audience {
+            background-color: #e8f5e8;
+            color: #388e3c;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .status-active {
+            background-color: #e8f5e8;
+            color: #388e3c;
+        }
+        
+        .actions-section {
+            margin-top: 30px;
+            text-align: center;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-section {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</body>
+</html>

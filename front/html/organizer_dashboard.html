@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>组织者仪表板 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">欢迎，{{ username }}！（组织者）</div>
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">退出登录</a>
+        </div>
+        
+        <h1>组织者仪表板</h1>
+        
+        <div class="dashboard-cards">
+            <div class="card">
+                <h3>演讲管理</h3>
+                <p>创建和管理演讲项目</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('presentation.manage_presentations') }}" class="btn btn-primary">管理演讲</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>生成题目</h3>
+                <p>上传文件自动生成选择题</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('quiz.create_quiz_from_file') }}" class="btn btn-primary">生成题目</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>测试统计</h3>
+                <p>查看所有测试的参与情况和结果</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('quiz.organizer_quiz_overview') }}" class="btn btn-primary">查看统计</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>用户管理</h3>
+                <p>添加、删除和管理系统用户</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('user.manage_users') }}" class="btn btn-primary">管理用户</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>查看反馈</h3>
+                <p>统一查看所有演讲的反馈信息</p>
+                <div class="quick-actions">
+                    <a href="{{ url_for('feedback.all_feedbacks_overview') }}" class="btn btn-primary">查看反馈</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>听众报告 - PopQuiz系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">听众报告</div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">返回仪表板</a>
+        </div>
+        
+        <h1>听众答题报告</h1>
+        
+        <!-- 筛选器 -->
+        <div class="filter-section">
+            <form method="get" class="filter-form">
+                <div class="filter-group">
+                    <label for="quiz_filter">按测试筛选：</label>
+                    <select name="quiz_id" id="quiz_filter" onchange="this.form.submit()">
+                        <option value="">所有测试</option>
+                        {% for quiz in all_quizzes %}
+                            <option value="{{ quiz.id }}" {% if request.args.get('quiz_id') == quiz.id|string %}selected{% endif %}>
+                                {{ quiz.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="sort_filter">排序方式：</label>
+                    <select name="sort_by" id="sort_filter" onchange="this.form.submit()">
+                        <option value="score_desc" {% if request.args.get('sort_by') == 'score_desc' %}selected{% endif %}>得分降序</option>
+                        <option value="score_asc" {% if request.args.get('sort_by') == 'score_asc' %}selected{% endif %}>得分升序</option>
+                        <option value="time_desc" {% if request.args.get('sort_by') == 'time_desc' %}selected{% endif %}>最新答题</option>
+                        <option value="name_asc" {% if request.args.get('sort_by') == 'name_asc' %}selected{% endif %}>姓名排序</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 听众列表 -->
+        <div class="audience-list">
+            {% for user_report in user_reports %}
+                <div class="audience-card">
+                    <div class="audience-header">
+                        <div class="user-info">
+                            <h3>{{ user_report.user.username }}</h3>
+                            <span class="user-email">{{ user_report.user.email }}</span>
+                        </div>
+                        <div class="overall-stats">
+                            <div class="stat">
+                                <span class="stat-value">{{ user_report.total_quizzes }}</span>
+                                <span class="stat-label">参与测试</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">{{ "%.1f"|format(user_report.avg_score) }}%</span>
+                                <span class="stat-label">平均得分</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-results">
+                        {% for response in user_report.responses %}
+                            <div class="quiz-result">
+                                <div class="result-header">
+                                    <span class="quiz-name">{{ response.quiz.title }}</span>
+                                    <span class="score {{ 'excellent' if response.score >= 80 else 'good' if response.score >= 60 else 'poor' }}">
+                                        {{ "%.1f"|format(response.score) }}%
+                                    </span>
+                                </div>
+                                
+                                <div class="result-details">
+                                    <span>正确率: {{ response.correct_answers }}/{{ response.total_questions }}</span>
+                                    <span>排名: {{ response.rank }}/{{ response.total_participants }}</span>
+                                    <span>用时: {{ response.time_spent // 60 }}分{{ response.time_spent % 60 }}秒</span>
+                                    <span>答题时间: {{ response.submitted_at.strftime('%m-%d %H:%M') }}</span>
+                                </div>
+                                
+                                <div class="result-actions">
+                                    <a href="{{ url_for('quiz.view_quiz_result', response_id=response.id) }}" class="btn btn-sm btn-info">查看详情</a>
+                                    <button onclick="generateReport({{ response.id }})" class="btn btn-sm btn-primary">生成报告</button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <script>
+        function generateReport(responseId) {
+            // 生成个人报告的功能
+            window.open(`/generate-individual-report/${responseId}`, '_blank');
+        }
+    </script>
+    
+    <style>
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .filter-form {
+            display: flex;
+            gap: 20px;
+            align-items: end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .filter-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .audience-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .audience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .user-email {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .overall-stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .quiz-result {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .quiz-name {
+            font-weight: bold;
+        }
+        
+        .score {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .score.excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .score.good {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .score.poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .result-details {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+    </style>
+</body>
+</html>
